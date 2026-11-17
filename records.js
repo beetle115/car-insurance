@@ -181,23 +181,12 @@ const list = r ? (Array.isArray(r.photos) ? r.photos : (r.photo ? [r.photo] : []
 if (list.length > 0) openLightboxWithList(list, 0);
 }
 });
-let stopRecordsSync = null;
-function startRecordsSync(onError) {
-if (stopRecordsSync) return;
-stopRecordsSync = recordsCol.onSnapshot((snap) => {
+recordsCol.onSnapshot((snap) => {
 allRecords = [];
 snap.forEach(d => allRecords.push({ id: d.id, ...d.data() }));
 renderList();
 updateKpis();
-}, (err) => {
-stopRecordsSync = null;
-if (onError) onError(err);
 });
-}
-function stopRecordsSyncNow() {
-if (stopRecordsSync) { stopRecordsSync(); stopRecordsSync = null; }
-allRecords = [];
-}
 function updateKpis() {
 document.getElementById("kpiTotalCount").innerText = `${allRecords.length} 件`;
 let totalFee = 0;
