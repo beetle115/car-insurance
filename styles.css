@@ -676,26 +676,3 @@ font-weight: 700;
 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 #toast.show { visibility: visible; }
-/* ===== 登入畫面 ===== */
-.login-overlay {
-position: fixed; inset: 0; z-index: 3000;
-display: flex; align-items: center; justify-content: center; padding: 20px;
-background: radial-gradient(circle at 15% 15%, #1e1b4b 0%, #0f172a 50%, #090d16 100%);
-}
-.login-overlay.hidden { display: none; }
-.login-card {
-width: 100%; max-width: 340px; text-align: center;
-background: #1e293b; border: 1px solid var(--card-border);
-border-radius: 18px; padding: 28px 22px;
-}
-.login-logo { font-size: 40px; }
-.login-card h2 { margin: 6px 0 4px; font-size: 20px; font-weight: 800; color: #fff; }
-.login-sub { color: #94a3b8; font-size: 13px; margin-bottom: 20px; }
-.login-google-btn {
-width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
-background: #fff; color: #1f2937; border: none; border-radius: 10px;
-padding: 11px 14px; font-size: 15px; font-weight: 700; cursor: pointer;
-}
-.login-google-btn:disabled { opacity: .6; cursor: default; }
-.login-msg { margin-top: 14px; font-size: 13px; color: #fca5a5; line-height: 1.6; min-height: 1em; }
-.login-msg.info { color: #94a3b8; }
