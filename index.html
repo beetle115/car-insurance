@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>客戶車險智能追蹤看板</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="container">
+<div class="header-banner">
+<div class="header-info">
+<h1>🚗 車險追蹤</h1>
+</div>
+<div class="header-actions">
+<span class="header-badge">⚡ 連線</span>
+<button type="button" class="btn-config" id="openApiKeyBtn">⚙️ 金鑰</button>
+</div>
+</div>
+<div class="kpi-container">
+<div class="kpi-card">
+<div class="kpi-icon blue">🚗</div>
+<div class="kpi-info">
+<span class="kpi-title">車險總件數</span>
+<span class="kpi-value" id="kpiTotalCount">0 件</span>
+</div>
+</div>
+<div class="kpi-card">
+<div class="kpi-icon green">💰</div>
+<div class="kpi-info">
+<span class="kpi-title">
+推估收入 <span class="kpi-tag">保費 × 15%</span>
+</span>
+<span class="kpi-value" id="kpiEstimatedIncome">NT$ 0</span>
+</div>
+</div>
+</div>
+<div class="top-action-bar">
+<div class="action-card ai-theme">
+<div class="action-card-title">✨ AI 拍照歸檔</div>
+<div style="display:flex; gap:8px;">
+<input type="file" id="aiCameraInput" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="aiAlbumInput" accept="image/*" style="display:none;">
+<button type="button" class="btn-white" id="aiCameraBtn">📸 拍照歸檔</button>
+<button type="button" class="btn-translucent" id="aiAlbumBtn">🖼️ 相簿選取</button>
+</div>
+</div>
+<div class="action-card">
+<div class="action-card-title">➕ 手動建檔</div>
+<button type="button" class="btn-translucent" id="toggleManualBtn">展開手動表單 ▾</button>
+</div>
+</div>
+<div id="manualFormCard">
+<form id="manualForm" class="form-grid">
+<div>
+<label class="field-lbl">客戶姓名 *</label>
+<input type="text" id="mClientName" required>
+</div>
+<div>
+<label class="field-lbl">車牌號碼 *</label>
+<input type="text" id="mPlateNumber" placeholder="例: ABC-8888" required>
+</div>
+<div>
+<label class="field-lbl">車種</label>
+<select id="mVehicleType">
+<option value="機車 🛵">機車 🛵</option>
+<option value="汽車 🚗">汽車 🚗</option>
+</select>
+</div>
+<div>
+<label class="field-lbl">承保公司 *</label>
+<input type="text" id="mCompany" placeholder="例: 富邦、新光" required>
+</div>
+<div>
+<label class="field-lbl">起保日 *</label>
+<input type="date" id="mStartDate" required>
+</div>
+<div>
+<label class="field-lbl">總保費 (元)</label>
+<input type="number" id="mFee" placeholder="例: 2569">
+</div>
+<div class="full-width">
+<label class="uncompulsory-toggle-wrap">
+<input type="checkbox" id="mUncompulsory" class="toggle-switch-input">
+<span class="toggle-switch-track">
+<span class="toggle-switch-thumb"></span>
+</span>
+<span class="uncompulsory-label-text">未含強 / 未切強 (未投保強制險)</span>
+</label>
+</div>
+<div class="full-width">
+<label class="field-lbl">自填備註 (選填)</label>
+<input type="text" id="mNote" placeholder="自填備註事項...">
+</div>
+<div class="full-width" style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
+<button type="button" class="btn-translucent" id="cancelManualBtn">取消</button>
+<button type="submit" class="btn-white" style="background:#4f46e5; color:#ffffff;">儲存記錄</button>
+</div>
+</form>
+</div>
+<div class="toolbar">
+<div class="search-box">
+<input type="text" id="searchInput" placeholder="🔍 搜尋車牌、客戶、公司...">
+</div>
+<div class="sort-box">
+<select id="sortSelect">
+<option value="date-asc">⏳ 到期近到遠</option>
+<option value="date-desc">⌛ 到期遠到近</option>
+</select>
+</div>
+<div class="tools-btn-group">
+<input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+<button type="button" class="btn-tool btn-import" id="importCsvBtn">📥 匯入</button>
+<button type="button" class="btn-tool btn-export" id="exportCsvBtn">📤 匯出</button>
+<button type="button" class="btn-tool btn-clear" id="clearAllBtn">🗑️ 清除</button>
+</div>
+</div>
+<div id="accordionContainer">
+<div style="text-align:center; padding: 36px; color:#94a3b8;">載入資料庫中...</div>
+</div>
+</div>
+<div id="aiConfirmModal" class="modal">
+<div class="modal-content">
+<div class="modal-header-compact">
+<div style="display:flex; align-items:center;">
+<h3 style="font-size:15px; font-weight:800;">✨ AI 辨識結果確認</h3>
+<span id="aiCustomerBadge" class="badge-status badge-new">全新客戶：自動建檔</span>
+</div>
+<button type="button" id="closeAiModalBtn" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+</div>
+<form id="aiConfirmForm" class="compact-two-col-grid">
+<input type="hidden" id="aiExistingDocId">
+<div>
+<label class="field-lbl">客戶姓名</label>
+<input type="text" id="aiClientName" required>
+</div>
+<div>
+<label class="field-lbl">車牌號碼</label>
+<input type="text" id="aiPlateNumber" required>
+</div>
+<div>
+<label class="field-lbl">車種</label>
+<select id="aiVehicleType">
+<option value="機車 🛵">機車 🛵</option>
+<option value="汽車 🚗">汽車 🚗</option>
+</select>
+</div>
+<div>
+<label class="field-lbl">承保公司</label>
+<input type="text" id="aiCompany" required>
+</div>
+<div>
+<label class="field-lbl">起保日</label>
+<input type="date" id="aiStartDate" required>
+</div>
+<div>
+<label class="field-lbl">總保費 (元)</label>
+<input type="number" id="aiFee" placeholder="例: 2569">
+</div>
+<div class="col-span-2">
+<label class="uncompulsory-toggle-wrap">
+<input type="checkbox" id="aiUncompulsory" class="toggle-switch-input">
+<span class="toggle-switch-track">
+<span class="toggle-switch-thumb"></span>
+</span>
+<span class="uncompulsory-label-text">未含強 / 未切強 (未投保強制險)</span>
+</label>
+</div>
+<div class="col-span-2">
+<label class="field-lbl">自填備註 (AI 預設留白)</label>
+<input type="text" id="aiNote" placeholder="可在此填寫備註...">
+</div>
+<div class="col-span-2" style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
+<button type="button" class="btn-translucent" id="cancelAiModalBtn">取消</button>
+<button type="submit" class="btn-white" style="background:#4f46e5; color:#ffffff;">確認存檔</button>
+</div>
+</form>
+</div>
+</div>
+<div id="renewModal" class="modal">
+<div class="modal-content" style="max-width: 440px;">
+<div class="modal-header-compact">
+<h3 style="font-size:15px; font-weight:800; color:#a5b4fc;">🔄 確認辦理客戶續保</h3>
+<button type="button" id="closeRenewModalBtn" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+</div>
+<form id="renewForm" class="form-grid">
+<input type="hidden" id="renewDocId">
+<div class="full-width" style="background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 8px; padding: 10px; font-size: 13px;">
+<div style="font-weight: 700; color: #fff;" id="renewInfoText">客戶：- (車牌：-)</div>
+<div style="color: #94a3b8; margin-top: 4px; font-size: 12px;">系統已自動將起保日延長 1 年，可視需求調整保費或備註。</div>
+</div>
+<div class="full-width">
+<label class="field-lbl">續保新起保日 (+1年)</label>
+<input type="date" id="renewStartDate" required>
+</div>
+<div class="full-width">
+<label class="field-lbl">新年度保費 (元)</label>
+<input type="number" id="renewFee" placeholder="例: 2569">
+</div>
+<div class="full-width">
+<label class="field-lbl">自填備註 (續保記錄)</label>
+<input type="text" id="renewNote" placeholder="例: 2027年續保完成">
+</div>
+<div class="full-width" style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+<button type="button" class="btn-translucent" id="cancelRenewBtn">取消</button>
+<button type="submit" class="btn-white" style="background:#4f46e5; color:#ffffff;">確定續保更新</button>
+</div>
+</form>
+</div>
+</div>
+<div id="editModal" class="modal">
+<div class="modal-content" style="padding: 14px 16px;">
+<div class="modal-header-compact" style="margin-bottom: 8px;">
+<h3 style="font-size:15px; font-weight:800;">✏️ 編輯車險記錄</h3>
+<button type="button" id="closeEditModalBtn" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+</div>
+<form id="editForm" class="compact-two-col-grid">
+<input type="hidden" id="editDocId">
+<div>
+<label class="field-lbl">客戶姓名 *</label>
+<input type="text" id="editClientName" required>
+</div>
+<div>
+<label class="field-lbl">車牌號碼 *</label>
+<input type="text" id="editPlateNumber" required>
+</div>
+<div>
+<label class="field-lbl">車種</label>
+<select id="editVehicleType">
+<option value="機車 🛵">機車 🛵</option>
+<option value="汽車 🚗">汽車 🚗</option>
+</select>
+</div>
+<div>
+<label class="field-lbl">承保公司 *</label>
+<input type="text" id="editCompany" required>
+</div>
+<div>
+<label class="field-lbl">起保日 *</label>
+<input type="date" id="editStartDate" required>
+</div>
+<div>
+<label class="field-lbl">總保費 (元)</label>
+<input type="number" id="editFee" placeholder="例: 2569">
+</div>
+<div class="col-span-2">
+<label class="uncompulsory-toggle-wrap">
+<input type="checkbox" id="editUncompulsory" class="toggle-switch-input">
+<span class="toggle-switch-track">
+<span class="toggle-switch-thumb"></span>
+</span>
+<span class="uncompulsory-label-text">未含強 / 未切強 (未投保強制險)</span>
+</label>
+</div>
+<div class="col-span-2">
+<label class="field-lbl">自填備註</label>
+<input type="text" id="editNote" placeholder="自填備註事項..." style="height:34px;">
+</div>
+<div class="col-span-2" style="background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.18); padding: 8px 10px; border-radius: 8px;">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 6px;">
+<label class="field-lbl" style="margin:0; font-size:11px;">📸 照片附件</label>
+<div style="display:flex; gap:5px;">
+<input type="file" id="editCameraInput" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="editAlbumInput" accept="image/*" multiple style="display:none;">
+<button type="button" class="btn-translucent" id="editSnapCameraBtn" style="padding:3px 7px; font-size:11.5px;">📷 拍照</button>
+<button type="button" class="btn-translucent" id="editPickAlbumBtn" style="padding:3px 7px; font-size:11.5px;">🖼️ 相簿</button>
+</div>
+</div>
+<div class="photo-gallery" id="editPhotoGallery" style="margin-top:6px;"></div>
+</div>
+<div class="col-span-2" style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+<button type="button" class="btn-translucent" id="cancelEditBtn">取消</button>
+<button type="submit" class="btn-white" style="background:#4f46e5; color:#ffffff;">更新儲存</button>
+</div>
+</form>
+</div>
+</div>
+<div id="lightboxModal" class="lightbox-modal">
+<div class="lightbox-content">
+<div id="lightboxCounter" class="lightbox-counter">第 1 / 1 張</div>
+<div class="lightbox-viewer">
+<button type="button" class="lightbox-nav-btn lightbox-prev" id="lightboxPrevBtn" title="上一張">‹</button>
+<img id="lightboxImg" class="lightbox-img" src="" alt="保單預覽">
+<button type="button" class="lightbox-nav-btn lightbox-next" id="lightboxNextBtn" title="下一張">›</button>
+</div>
+<div class="lightbox-thumbnails" id="lightboxThumbsBar"></div>
+<div style="display:flex; gap:10px; margin-top: 4px;">
+<button type="button" class="btn-translucent" id="lightboxOpenNewTabBtn">🔍 另開原始圖</button>
+<button type="button" class="btn-white" id="lightboxCloseBtn">關閉</button>
+</div>
+</div>
+</div>
+<div id="apiKeyModal" class="modal">
+<div class="modal-content" style="max-width: 420px;">
+<h3 style="font-size:16px; font-weight:800; margin-bottom: 10px;">⚙️ 設定 Google Gemini API 金鑰</h3>
+<input type="password" id="apiKeyInput" placeholder="請貼上 AQ 開頭的金鑰" style="margin-bottom: 14px;">
+<div style="display:flex; justify-content:flex-end; gap:8px;">
+<button type="button" class="btn-translucent" id="cancelApiKeyBtn">取消</button>
+<button type="button" class="btn-white" style="background:#4f46e5; color:#ffffff;" id="saveApiKeyBtn">儲存</button>
+</div>
+</div>
+</div>
+<div id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="/core.js"></script>
+<script src="/records.js"></script>
+</body>
+</html>
