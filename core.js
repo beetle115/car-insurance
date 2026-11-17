@@ -1,5 +1,5 @@
 const firebaseConfig = {
-apiKey: "AIzaSyDSY6f7x10ojDowvM8mXhYofJtLBI0NiIM",
+apiKey: "AIzaSyDSY6f7x1OojDowvM8mXhYofJtLBI0NiIM",
 authDomain: "carinsurance-d84b5.firebaseapp.com",
 projectId: "carinsurance-d84b5",
 storageBucket: "carinsurance-d84b5.firebasestorage.app",
