@@ -276,25 +276,72 @@ if (hit) return hit;
 }
 return null;
 }
-function updateBadgeAndId(existRecord) {
+// ===== 新／舊客戶切換 =====
+const normPlate = (p) => (p || "").replace(/[^A-Z0-9]/gi, "").toUpperCase();
+let aiMatched = null;        // 比對到的舊客戶（可能是車牌差一個字的相似車牌）
+let aiMode = "new";          // "new" 新客戶建檔／"old" 舊客戶續保
+let aiModeLocked = false;    // 使用者手動選過，就不再自動切換
+let aiExtractedPlate = "";   // AI 原始辨識的車牌
+
+function refreshAiMatch() {
+const p = document.getElementById("aiPlateNumber").value;
+const n = document.getElementById("aiClientName").value;
+// 舊客戶模式下，車牌欄顯示的是舊客戶車牌，比對時改用 AI 原始車牌，避免互相影響
+aiMatched = findMatchedRecord(p, n) || (aiExtractedPlate ? findMatchedRecord(aiExtractedPlate, n) : null);
+if (!aiModeLocked) {
+const exact = aiMatched && normPlate(aiMatched.plateNumber) === normPlate(p);
+const sameName = aiMatched && n.trim() && (aiMatched.clientName || "").trim() === n.trim();
+aiMode = aiMatched && (exact || sameName) ? "old" : "new";
+}
+renderAiMode();
+}
+
+function renderAiMode() {
 const badge = document.getElementById("aiCustomerBadge");
 const idInput = document.getElementById("aiExistingDocId");
-if (existRecord) {
-idInput.value = existRecord.id;
+const hint = document.getElementById("aiMatchHint");
+document.getElementById("aiModeNew").classList.toggle("active", aiMode === "new");
+document.getElementById("aiModeOld").classList.toggle("active", aiMode === "old");
+const m = aiMatched;
+const desc = m ? `${m.clientName || "（無姓名）"}｜${m.plateNumber || ""}｜${m.company || ""}` : "";
+if (aiMode === "old" && m) {
+idInput.value = m.id;
 badge.innerText = "舊客戶：確認續保";
 badge.className = "badge-status badge-old";
+hint.className = "cust-hint ok";
+hint.innerText = `將更新舊客戶：${desc}`;
 } else {
 idInput.value = "";
 badge.innerText = "全新客戶：自動建檔";
 badge.className = "badge-status badge-new";
+if (aiMode === "old" && !m) {
+hint.className = "cust-hint warn";
+hint.innerText = "找不到相符的舊客戶，存檔時會建立為新客戶";
+} else if (m) {
+hint.className = "cust-hint info";
+hint.innerText = `有相似的舊客戶：${desc}。如果是同一位，請切到「舊客戶續保」`;
+} else {
+hint.className = "cust-hint";
+hint.innerText = "";
 }
 }
-document.getElementById("aiPlateNumber").addEventListener("input", () => {
-const p = document.getElementById("aiPlateNumber").value;
-const n = document.getElementById("aiClientName").value;
-const exist = findMatchedRecord(p, n);
-updateBadgeAndId(exist);
-});
+}
+
+function setAiMode(mode) {
+aiMode = mode;
+aiModeLocked = true;
+const plateEl = document.getElementById("aiPlateNumber");
+if (mode === "old" && aiMatched) {
+plateEl.value = aiMatched.plateNumber;
+} else if (mode === "new" && aiMatched && normPlate(plateEl.value) === normPlate(aiMatched.plateNumber) && aiExtractedPlate) {
+plateEl.value = aiExtractedPlate;   // 改回 AI 辨識的車牌，不沿用舊客戶的
+}
+renderAiMode();
+}
+document.getElementById("aiModeNew").addEventListener("click", () => setAiMode("new"));
+document.getElementById("aiModeOld").addEventListener("click", () => setAiMode("old"));
+document.getElementById("aiPlateNumber").addEventListener("input", refreshAiMatch);
+document.getElementById("aiClientName").addEventListener("input", refreshAiMatch);
 async function handleAiFile(file) {
 if (!file) return;
 const btn = document.getElementById("aiCameraBtn");
@@ -331,15 +378,18 @@ const parsed = JSON.parse(text);
 const extractedName = (parsed.clientName || "").trim();
 const extractedPlate = (parsed.plateNumber || "").trim().toUpperCase();
 const exist = findMatchedRecord(extractedPlate, extractedName);
+aiExtractedPlate = extractedPlate;
+aiModeLocked = false;
 document.getElementById("aiClientName").value = extractedName || (exist ? exist.clientName : "");
-document.getElementById("aiPlateNumber").value = exist ? exist.plateNumber : extractedPlate;
+document.getElementById("aiPlateNumber").value = extractedPlate;
 document.getElementById("aiCompany").value = cleanCompany(parsed.company || (exist ? exist.company : ""));
 document.getElementById("aiVehicleType").value = parsed.vehicleType || (exist ? exist.vehicleType : "機車 🛵");
 document.getElementById("aiStartDate").value = cleanDate(parsed.startDate) || "";
 document.getElementById("aiFee").value = parsed.fee || "";
 document.getElementById("aiUncompulsory").checked = !!parsed.uncompulsory;
 document.getElementById("aiNote").value = "";
-updateBadgeAndId(exist);
+refreshAiMatch();
+if (aiMode === "old" && aiMatched) document.getElementById("aiPlateNumber").value = aiMatched.plateNumber;
 document.getElementById("aiConfirmModal").classList.add("active");
 } catch (err) {
 alert("辨識失敗：" + err.message);
@@ -388,7 +438,7 @@ document.getElementById("manualForm").addEventListener("submit", async (e) => {
 e.preventDefault();
 const p = document.getElementById("mPlateNumber").value.trim().toUpperCase();
 const n = document.getElementById("mClientName").value.trim();
-const exist = findMatchedRecord(p, n);
+const exist = allRecords.find(r => normPlate(r.plateNumber) === normPlate(p)) || null;
 const sDate = document.getElementById("mStartDate").value;
 const feeVal = Number(document.getElementById("mFee").value) || 0;
 const data = {

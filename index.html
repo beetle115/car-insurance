@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="2026-11-18-sharedkey">
+<meta name="app-version" content="2026-11-18-custtoggle">
 <title>客戶車險智能追蹤看板</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
@@ -133,6 +133,13 @@
 </div>
 <form id="aiConfirmForm" class="compact-two-col-grid">
 <input type="hidden" id="aiExistingDocId">
+<div class="col-span-2">
+<div class="cust-toggle">
+<button type="button" id="aiModeNew">🆕 新客戶建檔</button>
+<button type="button" id="aiModeOld">🔄 舊客戶續保</button>
+</div>
+<div id="aiMatchHint" class="cust-hint"></div>
+</div>
 <div>
 <label class="field-lbl">客戶姓名</label>
 <input type="text" id="aiClientName" required>
