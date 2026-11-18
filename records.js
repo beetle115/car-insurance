@@ -129,7 +129,7 @@ let message;
 if (NOTICE_LANG[r.team || currentTeam] === "vi") {
 let viDate = dateStr;
 if (dateStr && dateStr.split("-").length >= 3) { const p = dateStr.split("-"); viDate = `${parseInt(p[2], 10)}/${parseInt(p[1], 10)}`; }
-const viFee = feeNum > 0 ? `💰 Phí tái tục tham khảo: khoảng NT$ ${feeNum.toLocaleString("vi-VN")}\n` : "";
+const viFee = feeNum > 0 ? `💰 Phí gia hạn bảo hiểm là NT$ ${feeNum.toLocaleString("vi-VN")}\n` : "";
 let viWarn = "";
 if (!cst.has) viWarn = "⚠️ Lưu ý: xe này trước đây chưa có bảo hiểm bắt buộc, lần này anh/chị nên mua kèm để được bảo vệ đầy đủ.\n";
 else if (!cst.aligned) {
@@ -140,7 +140,7 @@ viWarn = `⚠️ Lưu ý: bảo hiểm bắt buộc${cs} của anh/chị hết h
 message = `Xin chào anh/chị! 🌸\n` +
 `Em xin nhắc: bảo hiểm của xe 【${r.plateNumber || ""}】${r.company ? "（" + r.company + "）" : ""} sẽ hết hạn vào ngày ${viDate} ạ!\n` +
 viFee + viWarn +
-`Để xe của anh/chị luôn được bảo hiểm liên tục, em đã chuẩn bị sẵn báo giá tái tục và phiếu đóng phí. Nếu muốn điều chỉnh gói bảo hiểm hoặc có thắc mắc gì, anh/chị cứ nhắn cho em nhé! Chúc anh/chị lái xe bình an, thuận lợi 😊\n` +
+`Để xe của anh/chị luôn được bảo hiểm liên tục, em xin gửi hóa đơn gia hạn bảo hiểm. Nếu muốn điều chỉnh gói bảo hiểm hoặc có thắc mắc gì, anh/chị cứ nhắn cho em nhé! Chúc anh/chị lái xe bình an, thuận lợi 😊\n` +
 `Đóng phí xong anh/chị nhớ chụp giúp em biên lai hoặc ảnh màn hình nhé.`;
 } else
 message = `${givenName}您好！🌸\n` +
