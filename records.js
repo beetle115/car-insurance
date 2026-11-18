@@ -184,7 +184,7 @@ if (list.length > 0) openLightboxWithList(list, 0);
 let stopRecordsSync = null;
 function startRecordsSync(onError) {
 if (stopRecordsSync) return;
-stopRecordsSync = recordsCol.onSnapshot((snap) => {
+stopRecordsSync = recordsCol.where("team", "==", currentTeam).onSnapshot((snap) => {
 allRecords = [];
 snap.forEach(d => allRecords.push({ id: d.id, ...d.data() }));
 renderList();
@@ -355,7 +355,7 @@ await recordsCol.doc(exist.id).update(payload);
 updated++;
 } else {
 payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-await recordsCol.add(payload);
+await recordsCol.add({ ...payload, team: currentTeam });
 inserted++;
 }
 }
@@ -377,8 +377,8 @@ a.download = `客戶車險名冊_${new Date().toISOString().slice(0,10)}.csv`;
 a.click();
 });
 document.getElementById("clearAllBtn").addEventListener("click", async () => {
-if (!confirm("⚠️ 警告：這將清空資料庫所有車險記錄！確定要清除嗎？")) return;
-const snap = await recordsCol.get();
+if (!confirm(`⚠️ 警告：這將清空「${TEAM_LABELS[currentTeam] || currentTeam}」的所有車險記錄！確定要清除嗎？`)) return;
+const snap = await recordsCol.where("team", "==", currentTeam).get();
 const batch = db.batch();
 snap.forEach(d => batch.delete(d.ref));
 await batch.commit();

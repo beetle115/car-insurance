@@ -10,6 +10,8 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const recordsCol = db.collection("car_insurances");
 let allRecords = [];
+const TEAM_LABELS = { beetle: "甲霖的客戶", hoang: "夥伴的客戶" };
+let currentTeam = "beetle";
 let editTempPhotos = [];
 const expandedMonths = new Set();
 function getStoredApiKey() { return localStorage.getItem("GEMINI_API_KEY") || ""; }
@@ -365,7 +367,7 @@ await recordsCol.doc(existId).update(data);
 showToast("已完成續保並覆蓋更新！");
 } else {
 data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-await recordsCol.add(data);
+await recordsCol.add({ ...data, team: currentTeam });
 showToast("已建立新客戶保單！");
 }
 closeAiConfirmModal();
@@ -398,7 +400,7 @@ await recordsCol.doc(exist.id).update(data);
 showToast("舊客戶資料已覆蓋更新！");
 } else {
 data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-await recordsCol.add(data);
+await recordsCol.add({ ...data, team: currentTeam });
 showToast("新客戶已建立！");
 }
 document.getElementById("manualForm").reset();

@@ -699,3 +699,11 @@ padding: 11px 14px; font-size: 15px; font-weight: 700; cursor: pointer;
 .login-google-btn:disabled { opacity: .6; cursor: default; }
 .login-msg { margin-top: 14px; font-size: 13px; color: #fca5a5; line-height: 1.6; min-height: 1em; }
 .login-msg.info { color: #94a3b8; }
+
+/* ===== 客戶群切換 ===== */
+.team-select {
+background: rgba(99, 102, 241, 0.22); color: #fff;
+border: 1px solid rgba(165, 180, 252, 0.45); border-radius: 999px;
+padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer; width: auto;
+}
+.team-select option { color: #0f172a; }

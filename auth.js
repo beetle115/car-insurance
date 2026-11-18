@@ -63,15 +63,9 @@ const name = user.displayName || (user.email || "").split("@")[0];
 userBadge.textContent = "👤 " + name;
 userBadge.title = user.email || "";
 logoutBtn.style.display = "";
-startRecordsSync((err) => {
-if (err && err.code === "permission-denied") {
-setLoginMsg("此帳號（" + (user.email || "") + "）沒有使用權限，請聯絡管理者開通，或換一個帳號登入。");
-auth.signOut();
+setupTeams(user);
 } else {
-showToast("資料讀取失敗：" + (err && err.message || "請重新整理"));
-}
-});
-} else {
+teamSelect.style.display = "none";
 stopRecordsSyncNow();
 renderList();
 updateKpis();
@@ -80,3 +74,69 @@ logoutBtn.style.display = "none";
 loginOverlay.classList.remove("hidden");
 }
 });
+
+// ===== 客戶群（甲霖 / 夥伴）：資料依 team 欄位分開，權限由 Firestore 規則把關 =====
+const teamSelect = document.getElementById("teamSelect");
+const TEAM_IDS = Object.keys(TEAM_LABELS);
+
+function onSyncError(user) {
+return (err) => {
+if (err && err.code === "permission-denied") {
+setLoginMsg("此帳號（" + (user.email || "") + "）沒有使用權限，請聯絡管理者開通，或換一個帳號登入。");
+auth.signOut();
+} else {
+showToast("資料讀取失敗：" + (err && err.message || "請重新整理"));
+}
+};
+}
+
+// 舊資料沒有 team 欄位的，一律歸到甲霖（只有能讀整個資料庫的帳號會執行）
+async function migrateUntagged() {
+try {
+const snap = await recordsCol.get();
+const todo = snap.docs.filter(d => !d.data().team);
+for (let i = 0; i < todo.length; i += 400) {
+const batch = db.batch();
+todo.slice(i, i + 400).forEach(d => batch.update(d.ref, { team: "beetle" }));
+await batch.commit();
+}
+if (todo.length) showToast(`已整理 ${todo.length} 筆舊資料`);
+} catch (e) { /* 沒有整庫讀取權限就略過 */ }
+}
+
+async function detectTeams() {
+const ok = [];
+for (const t of TEAM_IDS) {
+try { await recordsCol.where("team", "==", t).limit(1).get(); ok.push(t); }
+catch (e) { /* 無權限 */ }
+}
+return ok;
+}
+
+function switchTeam(t) {
+currentTeam = t;
+try { localStorage.setItem("CAR_TEAM", t); } catch (e) {}
+stopRecordsSyncNow();
+renderList();
+updateKpis();
+startRecordsSync(onSyncError(auth.currentUser));
+}
+
+async function setupTeams(user) {
+await migrateUntagged();
+const teams = await detectTeams();
+if (!teams.length) { onSyncError(user)({ code: "permission-denied" }); return; }
+let saved = null;
+try { saved = localStorage.getItem("CAR_TEAM"); } catch (e) {}
+const start = teams.includes(saved) ? saved : teams[0];
+if (teams.length > 1) {
+teamSelect.innerHTML = teams.map(t => `<option value="${t}">${TEAM_LABELS[t]}</option>`).join("");
+teamSelect.value = start;
+teamSelect.style.display = "";
+} else {
+teamSelect.style.display = "none";
+}
+switchTeam(start);
+}
+
+teamSelect.addEventListener("change", () => switchTeam(teamSelect.value));
