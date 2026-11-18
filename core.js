@@ -10,7 +10,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const recordsCol = db.collection("car_insurances");
 let allRecords = [];
-const TEAM_LABELS = { beetle: "甲霖的客戶", hoang: "夥伴的客戶" };
+const TEAM_LABELS = { beetle: "甲霖的客戶", hoang: "阮氏秋恒的客戶" };
 let currentTeam = "beetle";
 let editTempPhotos = [];
 const expandedMonths = new Set();
