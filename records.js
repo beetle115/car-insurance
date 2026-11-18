@@ -123,7 +123,27 @@ givenName = rawName.slice(1);
 givenName = rawName;
 }
 }
-const message = `${givenName}您好！🌸\n` +
+// 夥伴（阮氏秋恒）的客戶用越南文通知；系統介面維持中文
+const NOTICE_LANG = { hoang: "vi" };
+let message;
+if (NOTICE_LANG[r.team || currentTeam] === "vi") {
+let viDate = dateStr;
+if (dateStr && dateStr.split("-").length >= 3) { const p = dateStr.split("-"); viDate = `${parseInt(p[2], 10)}/${parseInt(p[1], 10)}`; }
+const viFee = feeNum > 0 ? `💰 Phí tái tục tham khảo: khoảng NT$ ${feeNum.toLocaleString("vi-VN")}\n` : "";
+let viWarn = "";
+if (!cst.has) viWarn = "⚠️ Lưu ý: xe này trước đây chưa có bảo hiểm bắt buộc, lần này anh/chị nên mua kèm để được bảo vệ đầy đủ.\n";
+else if (!cst.aligned) {
+let cs = "";
+if (cst.compStart) { const q = cst.compStart.split("-"); cs = ` (bắt đầu từ ${parseInt(q[2], 10)}/${parseInt(q[1], 10)}/${q[0]})`; }
+viWarn = `⚠️ Lưu ý: bảo hiểm bắt buộc${cs} của anh/chị hết hạn khác ngày với bảo hiểm tự nguyện, lần này nên gộp chung một ngày để sau này chỉ cần nhớ một ngày hết hạn.\n`;
+}
+message = `Xin chào anh/chị! 🌸\n` +
+`Em xin nhắc: bảo hiểm của xe 【${r.plateNumber || ""}】${r.company ? "（" + r.company + "）" : ""} sẽ hết hạn vào ngày ${viDate} ạ!\n` +
+viFee + viWarn +
+`Để xe của anh/chị luôn được bảo hiểm liên tục, em đã chuẩn bị sẵn báo giá tái tục và phiếu đóng phí. Nếu muốn điều chỉnh gói bảo hiểm hoặc có thắc mắc gì, anh/chị cứ nhắn cho em nhé! Chúc anh/chị lái xe bình an, thuận lợi 😊\n` +
+`Đóng phí xong anh/chị nhớ chụp giúp em biên lai hoặc ảnh màn hình nhé.`;
+} else
+message = `${givenName}您好！🌸\n` +
 `提醒您，您的愛車【${r.plateNumber || ''}】（${r.company || '產險'}）車險即將於 ${monthDay || dateStr} 到期囉！\n` +
 `${feeLine}` +
 `${uncompulsoryWarning}` +
@@ -142,7 +162,7 @@ tempArea.select();
 document.execCommand("copy");
 document.body.removeChild(tempArea);
 }
-showToast(`已複製【${r.clientName}】續保通知！`);
+showToast(`已複製【${r.clientName || r.plateNumber}】續保通知${NOTICE_LANG[r.team || currentTeam] === "vi" ? "（越南文）" : ""}！`);
 } catch (err) {
 showToast("複製失敗，請手動複製");
 }
