@@ -308,8 +308,12 @@ if (aiMode === "old" && m) {
 idInput.value = m.id;
 badge.innerText = "舊客戶：確認續保";
 badge.className = "badge-status badge-old";
-hint.className = "cust-hint ok";
-hint.innerText = `將更新舊客戶：${desc}`;
+const curName = document.getElementById("aiClientName").value.trim();
+const nameDiff = curName && m.clientName && m.clientName.trim() !== curName;
+hint.className = nameDiff ? "cust-hint warn" : "cust-hint ok";
+hint.innerText = nameDiff
+? `⚠️ 姓名不同（舊資料：${m.clientName}／這次：${curName}）。如果是新客戶，請按「🆕 新客戶建檔」`
+: `將更新舊客戶：${desc}`;
 } else {
 idInput.value = "";
 badge.innerText = "全新客戶：自動建檔";
