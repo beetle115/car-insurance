@@ -737,3 +737,41 @@ background-color: #22c55e !important; box-shadow: 0 0 10px rgba(34,197,94,0.45) 
 .comp-hint { font-size: 12px; line-height: 1.5; color: #94a3b8; }
 .comp-hint.ok { color: #4ade80; }
 .comp-hint.warn { color: #fbbf24; }
+
+/* ===== 資料卡／投保內容 ===== */
+.btn-op-profile { background: rgba(255,255,255,0.08); color: #e2e8f0; gap: 4px; }
+.btn-op-coverage { background: rgba(99,102,241,0.18); color: #c7d2fe; gap: 4px; }
+.prof-dot { width: 7px; height: 7px; border-radius: 50%; background: #64748b; display: inline-block; }
+.prof-dot.on { background: #34d399; }
+.cov-cnt { padding: 0 5px; border-radius: 999px; background: rgba(129,140,248,0.35); font-size: 10.5px; }
+.prof-modal { max-width: 460px; }
+.prof-ai { padding: 12px; border-radius: 12px; background: rgba(99,102,241,0.1); border: 1px solid rgba(129,140,248,0.35); }
+.prof-ai-btns { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+.prof-ai-btns button { min-height: 42px; border-radius: 10px; border: 1px solid #818cf8; background: rgba(99,102,241,0.28); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.prof-ai-btns button:last-child { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+.prof-ai-msg { font-size: 11.5px; color: #a5b4fc; line-height: 1.5; margin-top: 8px; }
+.prof-sec-title { font-size: 13px; font-weight: 800; color: #a5b4fc; margin: 14px 0 8px; letter-spacing: .5px; }
+.prof-photos { display: flex; gap: 10px; flex-wrap: wrap; }
+.prof-thumb { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.prof-thumb img { width: 96px; height: 68px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); cursor: zoom-in; }
+.prof-thumb span { font-size: 11px; color: #94a3b8; }
+.prof-thumb .photo-del-btn { position: absolute; top: -6px; right: -6px; }
+.prof-sources { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.prof-sources button { min-height: 38px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #e2e8f0; font-size: 13px; font-weight: 700; cursor: pointer; }
+.prof-sources button.active { border-color: #818cf8; background: rgba(99,102,241,0.35); color: #fff; }
+.cov-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cov-chip { padding: 3px 9px; border-radius: 999px; background: rgba(52,211,153,0.16); border: 1px solid rgba(52,211,153,0.4); color: #a7f3d0; font-size: 12px; font-weight: 700; }
+.cov-list { display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; overflow: hidden; }
+.cov-row { display: flex; flex-direction: column; gap: 6px; padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.07); background: rgba(15,23,42,0.45); }
+.cov-row.on { background: transparent; }
+.cov-check { display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 30px; }
+.cov-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.cov-box { width: 20px; height: 20px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); flex: none; display: flex; align-items: center; justify-content: center; }
+.cov-check input:checked + .cov-box { background: #34d399; border-color: #34d399; }
+.cov-check input:checked + .cov-box::after { content: "✓"; color: #0f172a; font-weight: 900; font-size: 13px; }
+.cov-name { font-size: 14px; font-weight: 700; color: #64748b; }
+.cov-row.on .cov-name { color: #f1f5f9; }
+.cov-fields { display: none; gap: 6px; padding-left: 30px; }
+.cov-row.on .cov-fields { display: flex; }
+.cov-fields select { width: 76px; flex: none; }
+.cov-fields input { flex: 1; min-width: 0; }

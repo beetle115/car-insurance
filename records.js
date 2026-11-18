@@ -178,6 +178,10 @@ showToast("已刪除該筆資料");
 alert("刪除失敗: " + err.message);
 }
 }
+} else if (action === "profile") {
+openProfileModal(id);
+} else if (action === "coverage") {
+openCoverageModal(id);
 } else if (action === "view-photo") {
 const r = allRecords.find(item => item.id === id);
 const list = r ? (Array.isArray(r.photos) ? r.photos : (r.photo ? [r.photo] : [])) : [];
@@ -296,6 +300,8 @@ return `
 <td>
 <div style="display:flex; gap:5px; align-items:center;">
 <button type="button" class="btn-op btn-op-notice" data-action="copy" data-id="${r.id}">📋 通知</button>
+<button type="button" class="btn-op btn-op-profile" data-action="profile" data-id="${r.id}">資料卡<span class="prof-dot ${r.hasProfile ? 'on' : ''}"></span></button>
+<button type="button" class="btn-op btn-op-coverage" data-action="coverage" data-id="${r.id}">投保<span class="cov-cnt">${r.coverageCount || 0}</span></button>
 <button type="button" class="btn-op btn-op-renew" data-action="renew" data-id="${r.id}">續保</button>
 <button type="button" class="btn-op btn-op-edit" data-action="edit" data-id="${r.id}">編輯</button>
 <button type="button" class="btn-op btn-op-delete" data-action="delete" data-id="${r.id}">刪除</button>

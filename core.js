@@ -355,12 +355,12 @@ try {
 const b64 = await compressForAi(file);
 const pureB64 = b64.split(",")[1];
 const apiKey = getStoredApiKey();
-const prompt = '解析此車險保單。輸出純JSON格式(勿用Markdown):\n{"clientName":"被保險人姓名","plateNumber":"牌照號碼(大寫英數加破折號)","company":"承保公司簡稱(去除產險二字)","startDate":"保險期間開始日YYYY-MM-DD(民國115年為2026,116年為2027)","vehicleType":"機車 🛵或汽車 🚗","endDate":"任意險保險期間到期日YYYY-MM-DD","fee":總保險費純數字(任意險加強制險合計),"hasCompulsory":true若有強制汽(機)車責任保險否則false,"compulsoryStartDate":"強制險保險期間開始日YYYY-MM-DD,沒有填空字串","compulsoryEndDate":"強制險保險期間到期日YYYY-MM-DD,沒有填空字串"}\n注意:startDate/endDate取任意險(車體、第三人責任等)的保險期間;若只有強制險則填強制險期間。';
+const prompt = '解析此車險保單。輸出純JSON格式(勿用Markdown):\n{"clientName":"被保險人姓名","plateNumber":"牌照號碼(大寫英數加破折號)","company":"承保公司簡稱(去除產險二字)","startDate":"保險期間開始日YYYY-MM-DD(民國115年為2026,116年為2027)","vehicleType":"機車 🛵或汽車 🚗","endDate":"任意險保險期間到期日YYYY-MM-DD","fee":總保險費純數字(任意險加強制險合計),"hasCompulsory":true若有強制汽(機)車責任保險否則false,"compulsoryStartDate":"強制險保險期間開始日YYYY-MM-DD,沒有填空字串","compulsoryEndDate":"強制險保險期間到期日YYYY-MM-DD,沒有填空字串"' + COVERAGE_PROMPT + '}\n注意:startDate/endDate取任意險(車體、第三人責任等)的保險期間;若只有強制險則填強制險期間。';
 const body = {
 contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: pureB64 } }] }],
 generationConfig: {
 temperature: 0.1,
-maxOutputTokens: 500
+maxOutputTokens: 1500
 }
 };
 const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent", {
@@ -391,6 +391,7 @@ document.getElementById("aiVehicleType").value = parsed.vehicleType || (exist ? 
 document.getElementById("aiStartDate").value = cleanDate(parsed.startDate) || "";
 document.getElementById("aiFee").value = parsed.fee || "";
 writeComp("ai", compFromAi(parsed));
+setAiCoverage(parsed);
 document.getElementById("aiNote").value = "";
 refreshAiMatch();
 if (aiMode === "old" && aiMatched) document.getElementById("aiPlateNumber").value = aiMatched.plateNumber;
@@ -422,6 +423,7 @@ expiryDate: sDate,
 fee: feeVal,
 premium: feeVal,
 ...readComp("ai"),
+...(aiCoverageTemp && coverageCount(aiCoverageTemp) ? { coverage: aiCoverageTemp, coverageCount: coverageCount(aiCoverageTemp) } : {}),
 note: document.getElementById("aiNote").value.trim()
 };
 try {

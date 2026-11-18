@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="2026-11-18-comp">
+<meta name="app-version" content="2026-11-18-profile">
 <title>客戶車險智能追蹤看板</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
@@ -197,6 +197,7 @@
 <div id="aiCompHint" class="comp-hint"></div>
 </div>
 <div class="col-span-2">
+<div id="aiCoverageSummary" class="cust-hint info" style="margin-bottom:8px;"></div>
 <label class="field-lbl">自填備註 (AI 預設留白)</label>
 <input type="text" id="aiNote" placeholder="可在此填寫備註...">
 </div>
@@ -315,6 +316,81 @@
 </form>
 </div>
 </div>
+<div id="profileModal" class="modal">
+<div class="modal-content prof-modal">
+<div class="modal-header-compact">
+<div><h3 style="font-size:15px; font-weight:800;">👤 客戶資料卡</h3><div id="profTitle" style="font-size:12px;color:#94a3b8;margin-top:2px;"></div></div>
+<button type="button" id="closeProfileBtn" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+</div>
+<div class="prof-ai">
+<div style="font-size:13px;font-weight:800;margin-bottom:8px;">✨ AI 拍照自動填入</div>
+<input type="file" id="pCamInput" accept="image/*" capture="environment" style="display:none;">
+<input type="file" id="pAlbumInput" accept="image/*" multiple style="display:none;">
+<div class="prof-ai-btns">
+<button type="button" id="pSnapId">📸 拍身分證</button>
+<button type="button" id="pSnapLicense">📸 拍行照</button>
+<button type="button" id="pPickAlbum">🖼️ 從相簿選</button>
+</div>
+<div id="pAiMsg" class="prof-ai-msg">辨識後自動填入下方欄位，可再手動修改。照片會一起存檔，之後可點開核對。</div>
+</div>
+<div class="prof-sec-title">證件照片</div>
+<div id="pPhotos" class="prof-photos"></div>
+<div class="prof-sec-title">基本資料</div>
+<div class="compact-two-col-grid">
+<div><label class="field-lbl">姓名</label><input type="text" id="pName" placeholder=""></div>
+<div><label class="field-lbl">生日（民國）</label><input type="text" id="pBirth" placeholder="例：75/03/12"></div>
+<div class="col-span-2"><label class="field-lbl">身分證字號</label><div style="display:flex;gap:6px;"><input type="text" id="pIdNo" style="flex:1;font-family:ui-monospace,Menlo,monospace;letter-spacing:1px;"><button type="button" id="pIdToggle" class="btn-translucent" style="min-width:60px;">顯示</button></div></div>
+<div><label class="field-lbl">性別</label><select id="pGender"><option value=""></option><option value="男">男</option><option value="女">女</option></select></div>
+<div><label class="field-lbl">手機</label><input type="tel" id="pPhone" placeholder="" style="font-family:ui-monospace,Menlo,monospace;"></div>
+<div><label class="field-lbl">LINE ID</label><input type="text" id="pLine" placeholder=""></div>
+<div><label class="field-lbl">Email</label><input type="email" id="pEmail" placeholder=""></div>
+<div class="col-span-2"><label class="field-lbl">地址</label><input type="text" id="pAddress" placeholder=""></div>
+</div>
+<div class="prof-sec-title">客戶來源</div>
+<div id="pSources" class="prof-sources">
+<button type="button" data-src="轉介紹">轉介紹</button><button type="button" data-src="網路">網路</button><button type="button" data-src="自己客戶">自己客戶</button><button type="button" data-src="其他">其他</button>
+</div>
+<div class="compact-two-col-grid" style="margin-top:8px;">
+<div><label class="field-lbl">介紹人</label><input type="text" id="pReferrer" placeholder=""></div>
+<div><label class="field-lbl">備註</label><input type="text" id="pNote" placeholder="例：只用 LINE 聯絡"></div>
+</div>
+<div class="prof-sec-title">車籍資料（行照）</div>
+<div class="compact-two-col-grid">
+<div><label class="field-lbl">車主</label><input type="text" id="pOwner" placeholder=""></div>
+<div><label class="field-lbl">車牌</label><input type="text" id="pPlate" placeholder="" style="font-family:ui-monospace,Menlo,monospace;"></div>
+<div><label class="field-lbl">廠牌／型式</label><input type="text" id="pModel" placeholder=""></div>
+<div><label class="field-lbl">出廠年月</label><input type="text" id="pMfg" placeholder=""></div>
+<div><label class="field-lbl">排氣量</label><input type="text" id="pCc" placeholder=""></div>
+<div><label class="field-lbl">發照日期</label><input type="text" id="pIssue" placeholder=""></div>
+<div class="col-span-2"><label class="field-lbl">引擎號碼</label><input type="text" id="pEngine" placeholder="" style="font-family:ui-monospace,Menlo,monospace;"></div>
+<div class="col-span-2"><label class="field-lbl">車身號碼</label><input type="text" id="pChassis" placeholder="" style="font-family:ui-monospace,Menlo,monospace;"></div>
+</div>
+<div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+<button type="button" class="btn-translucent" id="cancelProfileBtn">取消</button>
+<button type="button" class="btn-white" style="background:#4f46e5; color:#ffffff;" id="saveProfileBtn">儲存資料卡</button>
+</div>
+</div>
+</div>
+<div id="coverageModal" class="modal">
+<div class="modal-content prof-modal">
+<div class="modal-header-compact">
+<div><h3 style="font-size:15px; font-weight:800;">🛡️ 投保內容</h3><div id="covTitle" style="font-size:12px;color:#94a3b8;margin-top:2px;"></div></div>
+<button type="button" id="closeCoverageBtn" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+</div>
+<div class="prof-ai">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-size:13px;font-weight:800;">重點摘要</span><span id="covCount" style="font-size:12px;color:#a5b4fc;"></span></div>
+<div id="covChips" class="cov-chips"></div>
+<div id="covCompulsory" style="font-size:12px;color:#94a3b8;margin-top:8px;"></div>
+</div>
+<div class="prof-ai-msg" style="margin:10px 0;">ⓘ 建檔拍照時 AI 已一併讀出；勾選或填保額可手動修改</div>
+<div id="covList" class="cov-list"></div>
+<div style="margin-top:10px;"><label class="field-lbl">投保備註</label><input type="text" id="covNote" placeholder="例：明年考慮加竊盜險"></div>
+<div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+<button type="button" class="btn-translucent" id="cancelCoverageBtn">取消</button>
+<button type="button" class="btn-white" style="background:#4f46e5; color:#ffffff;" id="saveCoverageBtn">儲存</button>
+</div>
+</div>
+</div>
 <div id="lightboxModal" class="lightbox-modal">
 <div class="lightbox-content">
 <div id="lightboxCounter" class="lightbox-counter">第 1 / 1 張</div>
@@ -359,6 +435,7 @@
 <script src="/core.js"></script>
 <script src="/comp.js"></script>
 <script src="/records.js"></script>
+<script src="/extras.js"></script>
 <script src="/auth.js"></script>
 </body>
 </html>
