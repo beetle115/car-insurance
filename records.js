@@ -205,14 +205,15 @@ function stopRecordsSyncNow() {
 if (stopRecordsSync) { stopRecordsSync(); stopRecordsSync = null; }
 allRecords = [];
 }
+const INCOME_RATE = 0.15;
+function recordFee(r) {
+const val = Number(r.fee !== undefined ? r.fee : (r.premium !== undefined ? r.premium : (r.totalFee || 0)));
+return !isNaN(val) && val > 0 ? val : 0;
+}
+function estIncome(list) { return Math.round(list.reduce((t, r) => t + recordFee(r), 0) * INCOME_RATE); }
 function updateKpis() {
 document.getElementById("kpiTotalCount").innerText = `${allRecords.length} 件`;
-let totalFee = 0;
-allRecords.forEach(r => {
-let val = Number(r.fee !== undefined ? r.fee : (r.premium !== undefined ? r.premium : (r.totalFee || 0)));
-if (!isNaN(val) && val > 0) totalFee += val;
-});
-const income = Math.round(totalFee * 0.15);
+const income = estIncome(allRecords);
 document.getElementById("kpiEstimatedIncome").innerText = `NT$ ${income.toLocaleString()}`;
 }
 document.getElementById("searchInput").addEventListener("input", renderList);
@@ -255,7 +256,7 @@ const isActive = expandedMonths.has(i) ? " active" : "";
 html += `
 <div class="month-accordion${isActive}" data-month="${i}">
 <div class="month-header">
-<div>📅 ${i} 月 <span class="month-badge">${list.length} 筆</span></div>
+<div>📅 ${i} 月 <span class="month-badge">${list.length} 筆</span>${list.length ? `<span class="month-income">推估收入 NT$ ${estIncome(list).toLocaleString()}</span>` : ""}</div>
 <span class="month-arrow">▼</span>
 </div>
 <div class="month-content">
