@@ -139,7 +139,7 @@ viWarn = `⚠️ Lưu ý: bảo hiểm bắt buộc${cs} của anh/chị hết h
 }
 message = `Xin chào anh/chị! 🌸\n` +
 `Em xin nhắc: bảo hiểm của xe 【${r.plateNumber || ""}】${r.company ? "（" + r.company + "）" : ""} sẽ hết hạn vào ngày ${viDate} ạ!\n` +
-viFee + viWarn +
+viFee +
 `Để xe của anh/chị luôn được bảo hiểm liên tục, em xin gửi hóa đơn gia hạn bảo hiểm. Nếu muốn điều chỉnh gói bảo hiểm hoặc có thắc mắc gì, anh/chị cứ nhắn cho em nhé! Chúc anh/chị lái xe bình an, thuận lợi 😊\n` +
 `Đóng phí xong anh/chị nhớ chụp giúp em biên lai hoặc ảnh màn hình nhé.`;
 } else
