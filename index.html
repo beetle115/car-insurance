@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="2026-11-18-profile">
+<meta name="app-version" content="2026-11-18-import">
 <title>客戶車險智能追蹤看板</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
@@ -388,6 +388,22 @@
 <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
 <button type="button" class="btn-translucent" id="cancelCoverageBtn">取消</button>
 <button type="button" class="btn-white" style="background:#4f46e5; color:#ffffff;" id="saveCoverageBtn">儲存</button>
+</div>
+</div>
+</div>
+<div id="importModal" class="modal">
+<div class="modal-content" style="max-width:820px;">
+<div class="modal-header-compact">
+<div><h3 style="font-size:15px; font-weight:800;">📥 匯入預覽</h3><div style="font-size:12px;color:#94a3b8;margin-top:2px;">匯入到：<b id="impTeam" style="color:#a5b4fc;"></b>｜<span id="impSummary"></span></div></div>
+<button type="button" id="impClose" style="border:none;background:transparent;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+</div>
+<div class="prof-ai-msg" style="margin:0 0 10px;">同車牌、同起保日的會略過（重複匯入不會變兩筆）；同車牌但這次起保日較新的，會當作續保更新。身分證、生日、電話、聯絡方式會存進「資料卡」。</div>
+<div class="table-wrapper" style="max-height:55vh;overflow:auto;">
+<table class="imp-table"><thead><tr><th>動作</th><th>姓名</th><th>車牌</th><th>起保日</th><th>保費</th><th>車種</th><th>提醒</th></tr></thead><tbody id="impList"></tbody></table>
+</div>
+<div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+<button type="button" class="btn-translucent" id="impCancel">取消</button>
+<button type="button" class="btn-white" style="background:#4f46e5; color:#ffffff;" id="impGo">匯入</button>
 </div>
 </div>
 </div>

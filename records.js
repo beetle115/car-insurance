@@ -326,6 +326,7 @@ if (!file) return;
 const reader = new FileReader();
 reader.onload = async function(evt) {
 const text = evt.target.result;
+if (typeof tryPartnerImport === "function" && tryPartnerImport(text)) { e.target.value = ""; return; }
 const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
 if (lines.length <= 1) return alert("檔案無有效資料");
 let updated = 0, inserted = 0;

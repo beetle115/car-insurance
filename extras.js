@@ -283,3 +283,146 @@ alert("儲存失敗：" + e.message);
 btn.disabled = false; btn.innerText = "儲存資料卡";
 }
 });
+
+// ===== 夥伴業績表匯入（投保日期／客人名字／居留證號／生日／電話／車牌號碼／投保期間／保險種類／投保金額／聯絡方式）=====
+function parseCsv(text) {
+const rows = []; let row = [], cur = "", q = false;
+for (let i = 0; i < text.length; i++) {
+const ch = text[i];
+if (q) {
+if (ch === '"') { if (text[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+else cur += ch;
+} else if (ch === '"') q = true;
+else if (ch === ",") { row.push(cur); cur = ""; }
+else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cur); rows.push(row); row = []; cur = ""; }
+else cur += ch;
+}
+if (cur || row.length) { row.push(cur); rows.push(row); }
+return rows.map(r => r.map(c => c.replace(/^﻿/, "").trim()));
+}
+const rocToIso = (y, m, d) => { y = parseInt(y, 10); if (y < 1911) y += 1911; return `${y}-${String(parseInt(m, 10)).padStart(2, "0")}-${String(parseInt(d, 10)).padStart(2, "0")}`; };
+function parsePeriod(s) {
+const m = String(s || "").match(/0*(\d{2,3})[\/.年-](\d{1,2})[\/.月-](\d{1,2})\D+0*(\d{2,3})[\/.年-](\d{1,2})[\/.月-](\d{1,2})/);
+if (!m) return { start: "", end: "", years: 0 };
+const start = rocToIso(m[1], m[2], m[3]), end = rocToIso(m[4], m[5], m[6]);
+return { start, end, years: parseInt(m[4], 10) - parseInt(m[1], 10) };
+}
+function normBirth(s) {
+s = String(s || "").trim();
+let m = s.match(/^0*(\d{2,3})[\/.-](\d{1,2})[\/.-](\d{1,2})$/);
+if (m) return `${m[1]}/${m[2].padStart(2, "0")}/${m[3].padStart(2, "0")}`;
+m = s.match(/^(\d{2,3})(\d{2})(\d{2})$/);
+if (m) return `${m[1]}/${m[2]}/${m[3]}`;
+return s;
+}
+function normPhone(s) {
+let d = String(s || "").replace(/\D/g, "");
+if (d.length === 9 && d[0] === "9") d = "0" + d;
+return d.length === 10 ? `${d.slice(0, 4)}-${d.slice(4, 7)}-${d.slice(7)}` : String(s || "").trim();
+}
+function contactInfo(s) {
+s = String(s || "").trim();
+const lower = s.toLowerCase();
+const out = { line: "", source: "", note: s };
+if (lower.startsWith("line")) out.line = s.replace(/^line\s*/i, "").trim();
+if (/^(fb|facebook|tiktok|ig|instagram)/i.test(s)) out.source = "網路";
+return out;
+}
+
+let partnerImportRows = [];
+function tryPartnerImport(text) {
+const rows = parseCsv(text);
+const hi = rows.findIndex(r => r.some(c => c.includes("車牌")) && r.some(c => c.includes("投保期間")));
+if (hi < 0) return false;
+const h = rows[hi];
+const col = (kw) => h.findIndex(c => c.includes(kw));
+const C = { sold: col("投保日期"), name: col("名字"), id: col("證"), birth: col("生日"), phone: col("電話"), plate: col("車牌"), period: col("投保期間"), kind: col("種類"), fee: col("金額"), contact: col("聯絡") };
+const get = (r, k) => (C[k] >= 0 ? (r[C[k]] || "") : "").trim();
+partnerImportRows = [];
+rows.slice(hi + 1).forEach(r => {
+const plate = get(r, "plate").toUpperCase().replace(/\s/g, "");
+const name = get(r, "name");
+if (!plate && !name) return;
+const per = parsePeriod(get(r, "period"));
+const fee = Number(get(r, "fee").replace(/[^\d.]/g, "")) || 0;
+const kind = get(r, "kind");
+const isVoluntary = kind.includes("任意");
+const ct = contactInfo(get(r, "contact"));
+const exist = allRecords.find(x => normPlate(x.plateNumber) === normPlate(plate));
+let action = "add", reason = "";
+if (exist && exist.startDate === per.start) { action = "skip"; reason = "已存在"; }
+else if (exist && per.start && (exist.startDate || "") < per.start) { action = "update"; reason = "續保更新"; }
+else if (exist) { action = "skip"; reason = "系統內資料較新"; }
+const warns = [];
+if (!name) warns.push("缺姓名");
+if (!per.start) warns.push("投保期間看不懂");
+if (isVoluntary) warns.push("任意險：請進「投保」補險種");
+if (per.years >= 2) warns.push(`${per.years}年期`);
+partnerImportRows.push({
+action, reason, warns, existId: exist ? exist.id : null,
+record: {
+clientName: name, plateNumber: plate,
+vehicleType: fee >= 2000 ? "汽車 🚗" : "機車 🛵",
+company: "", startDate: per.start, expiryDate: per.end || per.start,
+fee, premium: fee, soldDate: get(r, "sold"), policyYears: per.years || 1,
+...(isVoluntary
+? { coverage: { other: { on: true, amount: "任意險（險種待補）" } }, coverageCount: 1 }
+: { hasCompulsory: true, compulsoryAligned: true, compulsoryStartDate: "", uncompulsory: false }),
+note: [ct.note, per.years >= 2 ? `${per.years}年期，到期 ${fmtRocMD(per.end)}` : ""].filter(Boolean).join("｜")
+},
+profile: {
+pName: name, pIdNo: get(r, "id").toUpperCase(), pBirth: normBirth(get(r, "birth")),
+pPhone: normPhone(get(r, "phone")), pLine: ct.line, pSource: ct.source, pNote: ct.note, pPlate: plate
+}
+});
+});
+renderPartnerImport();
+document.getElementById("importModal").classList.add("active");
+return true;
+}
+
+function renderPartnerImport() {
+const n = { add: 0, update: 0, skip: 0 };
+partnerImportRows.forEach(x => n[x.action]++);
+document.getElementById("impTeam").innerText = TEAM_LABELS[currentTeam] || currentTeam;
+document.getElementById("impSummary").innerText = `新增 ${n.add} 筆、續保更新 ${n.update} 筆、略過 ${n.skip} 筆`;
+const tag = { add: '<span class="imp-tag add">新增</span>', update: '<span class="imp-tag upd">更新</span>', skip: '<span class="imp-tag skip">略過</span>' };
+document.getElementById("impList").innerHTML = partnerImportRows.map(x => `<tr class="${x.action === "skip" ? "imp-skip" : ""}">
+<td>${tag[x.action]}</td><td>${escHtml(x.record.clientName || "—")}</td><td style="font-family:ui-monospace,Menlo,monospace">${escHtml(x.record.plateNumber)}</td>
+<td>${escHtml(fmtRocMD(x.record.startDate))}</td><td>${x.record.fee || ""}</td><td>${escHtml(x.record.vehicleType)}</td>
+<td style="color:#fbbf24;font-size:11.5px">${escHtml([x.reason, ...x.warns].filter(Boolean).join("、"))}</td></tr>`).join("");
+const go = n.add + n.update;
+const btn = document.getElementById("impGo");
+btn.disabled = !go;
+btn.innerText = go ? `匯入 ${go} 筆到「${TEAM_LABELS[currentTeam] || currentTeam}」` : "沒有要匯入的資料";
+}
+
+const closeImportModal = () => document.getElementById("importModal").classList.remove("active");
+document.getElementById("impCancel").addEventListener("click", closeImportModal);
+document.getElementById("impClose").addEventListener("click", closeImportModal);
+document.getElementById("impGo").addEventListener("click", async () => {
+const btn = document.getElementById("impGo");
+btn.disabled = true;
+const team = currentTeam;
+let ok = 0, fail = 0;
+const todo = partnerImportRows.filter(x => x.action !== "skip");
+for (const x of todo) {
+btn.innerText = `匯入中… ${ok + fail + 1}/${todo.length}`;
+try {
+let id = x.existId;
+if (x.action === "update") {
+await recordsCol.doc(id).update({ ...x.record, hasProfile: true, renewedAt: firebase.firestore.FieldValue.serverTimestamp() });
+} else {
+const ref = await recordsCol.add({ ...x.record, team, hasProfile: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+id = ref.id;
+}
+const p = {};
+Object.entries(x.profile).forEach(([k, v]) => { if (v) p[k] = v; });
+await profilesCol.doc(id).set({ ...p, team, recordId: id, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+ok++;
+} catch (e) { console.error(e); fail++; }
+}
+closeImportModal();
+alert(`匯入完成：成功 ${ok} 筆${fail ? `，失敗 ${fail} 筆` : ""}。`);
+btn.disabled = false;
+});
