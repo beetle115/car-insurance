@@ -300,12 +300,19 @@ else cur += ch;
 if (cur || row.length) { row.push(cur); rows.push(row); }
 return rows.map(r => r.map(c => c.replace(/^﻿/, "").trim()));
 }
+const addYearIso = (iso) => { const [y, m, d] = iso.split("-"); return `${parseInt(y, 10) + 1}-${m}-${d}`; };
 const rocToIso = (y, m, d) => { y = parseInt(y, 10); if (y < 1911) y += 1911; return `${y}-${String(parseInt(m, 10)).padStart(2, "0")}-${String(parseInt(d, 10)).padStart(2, "0")}`; };
+// 日期自動判斷西元／民國：4 位數年份＝西元，2～3 位數（含前面多一個 0，如 0115）＝民國
+const DATE_RE = "0*(\\d{2,4})\\s*[\\/.年-]\\s*(\\d{1,2})\\s*[\\/.月-]\\s*(\\d{1,2})";
+function parseOneDate(s) {
+const m = String(s || "").match(new RegExp(DATE_RE));
+return m ? rocToIso(m[1], m[2], m[3]) : "";
+}
 function parsePeriod(s) {
-const m = String(s || "").match(/0*(\d{2,3})[\/.年-](\d{1,2})[\/.月-](\d{1,2})\D+0*(\d{2,3})[\/.年-](\d{1,2})[\/.月-](\d{1,2})/);
+const m = String(s || "").match(new RegExp(DATE_RE + "\\D+" + DATE_RE));
 if (!m) return { start: "", end: "", years: 0 };
 const start = rocToIso(m[1], m[2], m[3]), end = rocToIso(m[4], m[5], m[6]);
-return { start, end, years: parseInt(m[4], 10) - parseInt(m[1], 10) };
+return { start, end, years: parseInt(end.slice(0, 4), 10) - parseInt(start.slice(0, 4), 10) };
 }
 function normBirth(s) {
 s = String(s || "").trim();
@@ -343,7 +350,10 @@ rows.slice(hi + 1).forEach(r => {
 const plate = get(r, "plate").toUpperCase().replace(/\s/g, "");
 const name = get(r, "name");
 if (!plate && !name) return;
-const per = parsePeriod(get(r, "period"));
+let per = parsePeriod(get(r, "period"));
+const soldIso = parseOneDate(get(r, "sold"));
+let noPeriod = false;
+if (!per.start && soldIso) { per = { start: soldIso, end: addYearIso(soldIso), years: 1 }; noPeriod = true; }
 const fee = Number(get(r, "fee").replace(/[^\d.]/g, "")) || 0;
 const kind = get(r, "kind");
 const isVoluntary = kind.includes("任意");
@@ -356,6 +366,8 @@ else if (exist) { action = "skip"; reason = "系統內資料較新"; }
 const warns = [];
 if (!name) warns.push("缺姓名");
 if (!per.start) warns.push("投保期間看不懂");
+if (noPeriod) warns.push("沒填投保期間，暫用投保日期");
+if (plate && normPlate(plate).length < 5) warns.push("車牌不完整");
 if (isVoluntary) warns.push("任意險：請進「投保」補險種");
 if (per.years >= 2) warns.push(`${per.years}年期`);
 partnerImportRows.push({
@@ -364,7 +376,7 @@ record: {
 clientName: name, plateNumber: plate,
 vehicleType: fee >= 2000 ? "汽車 🚗" : "機車 🛵",
 company: "", startDate: per.start, expiryDate: per.end || per.start,
-fee, premium: fee, soldDate: get(r, "sold"), policyYears: per.years || 1,
+fee, premium: fee, soldDate: soldIso || get(r, "sold"), policyYears: per.years || 1,
 ...(isVoluntary
 ? { coverage: { other: { on: true, amount: "任意險（險種待補）" } }, coverageCount: 1 }
 : { hasCompulsory: true, compulsoryAligned: true, compulsoryStartDate: "", uncompulsory: false }),
