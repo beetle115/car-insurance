@@ -14,17 +14,26 @@ const TEAM_LABELS = { beetle: "甲霖的客戶", hoang: "夥伴的客戶" };
 let currentTeam = "beetle";
 let editTempPhotos = [];
 const expandedMonths = new Set();
-function getStoredApiKey() { return localStorage.getItem("GEMINI_API_KEY") || ""; }
+let sharedGeminiKey = "";
+function getStoredApiKey() { return sharedGeminiKey || localStorage.getItem("GEMINI_API_KEY") || ""; }
 document.getElementById("openApiKeyBtn").addEventListener("click", () => {
 document.getElementById("apiKeyInput").value = getStoredApiKey();
 document.getElementById("apiKeyModal").classList.add("active");
 });
 const closeApiKeyModal = () => document.getElementById("apiKeyModal").classList.remove("active");
 document.getElementById("cancelApiKeyBtn").addEventListener("click", closeApiKeyModal);
-document.getElementById("saveApiKeyBtn").addEventListener("click", () => {
-localStorage.setItem("GEMINI_API_KEY", document.getElementById("apiKeyInput").value.trim());
+document.getElementById("saveApiKeyBtn").addEventListener("click", async () => {
+const v = document.getElementById("apiKeyInput").value.trim();
+localStorage.setItem("GEMINI_API_KEY", v);
 closeApiKeyModal();
-showToast("金鑰已儲存！");
+if (!v) { showToast("金鑰已清除"); return; }
+try {
+await db.doc("config/gemini").set({ key: v, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+sharedGeminiKey = v;
+showToast("已設為所有人共用的金鑰！");
+} catch (e) {
+showToast("金鑰已儲存在這台裝置（只有管理者能設定共用金鑰）");
+}
 });
 function showToast(msg) {
 const t = document.getElementById("toast");

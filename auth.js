@@ -63,8 +63,10 @@ const name = user.displayName || (user.email || "").split("@")[0];
 userBadge.textContent = "👤 " + name;
 userBadge.title = user.email || "";
 logoutBtn.style.display = "";
+loadSharedGeminiKey();
 setupTeams(user);
 } else {
+sharedGeminiKey = "";
 teamSelect.style.display = "none";
 stopRecordsSyncNow();
 renderList();
@@ -140,3 +142,19 @@ switchTeam(start);
 }
 
 teamSelect.addEventListener("change", () => switchTeam(teamSelect.value));
+
+// ===== 共用 Gemini 金鑰：存在 Firestore config/gemini，只有授權帳號讀得到、只有管理者能寫 =====
+async function loadSharedGeminiKey() {
+try {
+const d = await db.doc("config/gemini").get();
+if (d.exists && d.data().key) { sharedGeminiKey = d.data().key; return; }
+const local = localStorage.getItem("GEMINI_API_KEY");
+if (local) {
+try {
+await db.doc("config/gemini").set({ key: local, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+sharedGeminiKey = local;
+showToast("已把這台裝置的 Gemini 金鑰設為大家共用");
+} catch (e) { /* 非管理者，略過 */ }
+}
+} catch (e) { /* 規則尚未開放，沿用本機金鑰 */ }
+}
