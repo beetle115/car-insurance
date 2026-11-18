@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="2026-11-18-custtoggle">
+<meta name="app-version" content="2026-11-18-comp">
 <title>客戶車險智能追蹤看板</title>
 <link rel="stylesheet" href="/styles.css">
 </head>
@@ -82,14 +82,24 @@
 <label class="field-lbl">總保費 (元)</label>
 <input type="number" id="mFee" placeholder="例: 2569">
 </div>
-<div class="full-width">
-<label class="uncompulsory-toggle-wrap">
-<input type="checkbox" id="mUncompulsory" class="toggle-switch-input">
-<span class="toggle-switch-track">
-<span class="toggle-switch-thumb"></span>
-</span>
-<span class="uncompulsory-label-text">未含強 / 未切強 (未投保強制險)</span>
+<div class="full-width comp-group">
+<div class="comp-row">
+<label class="comp-toggle">
+<input type="checkbox" id="mHasComp" class="toggle-switch-input" checked>
+<span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+<span class="comp-label">含強制險</span>
 </label>
+<label class="comp-toggle" id="mCompAlignedWrap">
+<input type="checkbox" id="mCompAligned" class="toggle-switch-input" checked>
+<span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+<span class="comp-label">切齊強制險</span>
+</label>
+</div>
+<div id="mCompStartWrap" class="comp-date" style="display:none;">
+<label class="field-lbl">強制險起保日（填了會自動判斷是否切齊）</label>
+<input type="date" id="mCompStart">
+</div>
+<div id="mCompHint" class="comp-hint"></div>
 </div>
 <div class="full-width">
 <label class="field-lbl">自填備註 (選填)</label>
@@ -167,14 +177,24 @@
 <label class="field-lbl">總保費 (元)</label>
 <input type="number" id="aiFee" placeholder="例: 2569">
 </div>
-<div class="col-span-2">
-<label class="uncompulsory-toggle-wrap">
-<input type="checkbox" id="aiUncompulsory" class="toggle-switch-input">
-<span class="toggle-switch-track">
-<span class="toggle-switch-thumb"></span>
-</span>
-<span class="uncompulsory-label-text">未含強 / 未切強 (未投保強制險)</span>
+<div class="col-span-2 comp-group">
+<div class="comp-row">
+<label class="comp-toggle">
+<input type="checkbox" id="aiHasComp" class="toggle-switch-input" checked>
+<span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+<span class="comp-label">含強制險</span>
 </label>
+<label class="comp-toggle" id="aiCompAlignedWrap">
+<input type="checkbox" id="aiCompAligned" class="toggle-switch-input" checked>
+<span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+<span class="comp-label">切齊強制險</span>
+</label>
+</div>
+<div id="aiCompStartWrap" class="comp-date" style="display:none;">
+<label class="field-lbl">強制險起保日（填了會自動判斷是否切齊）</label>
+<input type="date" id="aiCompStart">
+</div>
+<div id="aiCompHint" class="comp-hint"></div>
 </div>
 <div class="col-span-2">
 <label class="field-lbl">自填備註 (AI 預設留白)</label>
@@ -253,14 +273,24 @@
 <label class="field-lbl">總保費 (元)</label>
 <input type="number" id="editFee" placeholder="例: 2569">
 </div>
-<div class="col-span-2">
-<label class="uncompulsory-toggle-wrap">
-<input type="checkbox" id="editUncompulsory" class="toggle-switch-input">
-<span class="toggle-switch-track">
-<span class="toggle-switch-thumb"></span>
-</span>
-<span class="uncompulsory-label-text">未含強 / 未切強 (未投保強制險)</span>
+<div class="col-span-2 comp-group">
+<div class="comp-row">
+<label class="comp-toggle">
+<input type="checkbox" id="editHasComp" class="toggle-switch-input" checked>
+<span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+<span class="comp-label">含強制險</span>
 </label>
+<label class="comp-toggle" id="editCompAlignedWrap">
+<input type="checkbox" id="editCompAligned" class="toggle-switch-input" checked>
+<span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+<span class="comp-label">切齊強制險</span>
+</label>
+</div>
+<div id="editCompStartWrap" class="comp-date" style="display:none;">
+<label class="field-lbl">強制險起保日（填了會自動判斷是否切齊）</label>
+<input type="date" id="editCompStart">
+</div>
+<div id="editCompHint" class="comp-hint"></div>
 </div>
 <div class="col-span-2">
 <label class="field-lbl">自填備註</label>
@@ -327,6 +357,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 <script src="/core.js"></script>
+<script src="/comp.js"></script>
 <script src="/records.js"></script>
 <script src="/auth.js"></script>
 </body>

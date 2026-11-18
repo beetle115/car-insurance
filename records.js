@@ -59,7 +59,7 @@ document.getElementById("editVehicleType").value = record.vehicleType || "機車
 document.getElementById("editCompany").value = record.company || "";
 document.getElementById("editStartDate").value = record.startDate || record.expiryDate || "";
 document.getElementById("editFee").value = record.fee !== undefined ? record.fee : (record.premium !== undefined ? record.premium : "");
-document.getElementById("editUncompulsory").checked = !!record.uncompulsory;
+writeComp("edit", compState(record));
 document.getElementById("editNote").value = record.note || record.coverageDetails || "";
 document.getElementById("editModal").classList.add("active");
 }
@@ -81,7 +81,7 @@ startDate: sDate,
 expiryDate: sDate,
 fee: feeVal,
 premium: feeVal,
-uncompulsory: document.getElementById("editUncompulsory").checked,
+...readComp("edit"),
 note: document.getElementById("editNote").value.trim(),
 photos: editTempPhotos
 };
@@ -106,7 +106,10 @@ monthDay = `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日`;
 }
 const feeNum = Number(r.fee !== undefined ? r.fee : (r.premium !== undefined ? r.premium : 0));
 const feeLine = feeNum > 0 ? `💰 續保參考保費：約 NT$ ${feeNum.toLocaleString()} 元\n` : "";
-const uncompulsoryWarning = r.uncompulsory ? "⚠️ 提醒：此件原無投保強制險（或未切齊），本次建議一併投保完整保障。\n" : "";
+const cst = compState(r);
+let uncompulsoryWarning = "";
+if (!cst.has) uncompulsoryWarning = "⚠️ 提醒：此件原無投保強制險，本次建議一併投保完整保障。\n";
+else if (!cst.aligned) uncompulsoryWarning = `⚠️ 提醒：您的強制險${cst.compStart ? "（" + fmtRocMD(cst.compStart) + " 起保）" : ""}與任意險到期日不同，本次建議一併切齊，之後只要記一個到期日。\n`;
 const rawName = (r.clientName || "").trim();
 let givenName = "車主";
 if (rawName) {
@@ -287,7 +290,7 @@ return `
 <td>${r.company || '-'}</td>
 <td>${dateStr}</td>
 <td style="font-weight:700; color:#34d399;">${feeStr}</td>
-<td>${r.uncompulsory ? '<span class="tag-uncompulsory">未含強</span>' : '-'}</td>
+<td>${(() => { const c = compState(r); return !c.has ? '<span class="tag-uncompulsory">未含強</span>' : !c.aligned ? `<span class="tag-uncompulsory">強未切齊${c.compStart ? ' ' + fmtRocMD(c.compStart) : ''}</span>` : '-'; })()}</td>
 <td>${photoBadge}</td>
 <td style="color:#94a3b8; font-size:13px;">${r.note || r.coverageDetails || '-'}</td>
 <td>
@@ -331,7 +334,7 @@ plateNumber = (cols[2] || "").toUpperCase();
 company = cleanCompany(cols[3] || "");
 dateVal = cleanDate(cols[4] || "");
 fee = Number(cols[5]) || 0;
-uncompulsory = cols[6] === "未含強" || cols[6] === "true" || cols[6] === "1";
+uncompulsory = cols[6] === "未含強" || cols[6] === "強未切齊" || cols[6] === "true" || cols[6] === "1";
 note = cols[7] || "";
 } else {
 clientName = cols[0] || "";
@@ -340,7 +343,7 @@ vehicleType = cols[2] || "機車 🛵";
 company = cleanCompany(cols[3] || "");
 dateVal = cleanDate(cols[4] || "");
 fee = Number(cols[5]) || 0;
-uncompulsory = cols[6] === "未含強" || cols[6] === "true" || cols[6] === "1";
+uncompulsory = cols[6] === "未含強" || cols[6] === "強未切齊" || cols[6] === "true" || cols[6] === "1";
 note = cols[7] || "";
 }
 if (!plateNumber && !clientName) continue;
@@ -348,7 +351,9 @@ const exist = findMatchedRecord(plateNumber, clientName);
 const payload = {
 clientName, plateNumber, vehicleType, company,
 startDate: dateVal, expiryDate: dateVal,
-fee, premium: fee, uncompulsory, note
+fee, premium: fee, uncompulsory, note,
+hasCompulsory: cols[6] !== "未含強" && cols[6] !== "true" && cols[6] !== "1",
+compulsoryAligned: !uncompulsory
 };
 if (exist) {
 await recordsCol.doc(exist.id).update(payload);
@@ -365,10 +370,10 @@ reader.readAsText(file);
 });
 document.getElementById("exportCsvBtn").addEventListener("click", () => {
 if (!allRecords.length) return alert("尚無資料可匯出");
-let csv = "\uFEFF車種,客戶姓名,車牌號碼,承保公司,起保日,保費,未含強,備註\n";
+let csv = "\uFEFF車種,客戶姓名,車牌號碼,承保公司,起保日,保費,強制險,備註\n";
 allRecords.forEach(r => {
 const feeVal = r.fee !== undefined ? r.fee : (r.premium !== undefined ? r.premium : "");
-csv += `"${r.vehicleType||''}","${r.clientName||''}","${r.plateNumber||''}","${r.company||''}","${r.startDate||r.expiryDate||''}","${feeVal}","${r.uncompulsory?'未含強':''}","${r.note||r.coverageDetails||''}"\n`;
+csv += `"${r.vehicleType||''}","${r.clientName||''}","${r.plateNumber||''}","${r.company||''}","${r.startDate||r.expiryDate||''}","${feeVal}","${(() => { const c = compState(r); return !c.has ? '未含強' : !c.aligned ? '強未切齊' : ''; })()}","${r.note||r.coverageDetails||''}"\n`;
 });
 const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
 const a = document.createElement("a");
