@@ -346,6 +346,7 @@ document.getElementById("aiModeNew").addEventListener("click", () => setAiMode("
 document.getElementById("aiModeOld").addEventListener("click", () => setAiMode("old"));
 document.getElementById("aiPlateNumber").addEventListener("input", refreshAiMatch);
 document.getElementById("aiClientName").addEventListener("input", refreshAiMatch);
+let aiPhotoTemp = null;   // 這次 AI 辨識的保單照片，存檔時一併保存
 async function handleAiFile(file) {
 if (!file) return;
 const btn = document.getElementById("aiCameraBtn");
@@ -353,6 +354,7 @@ btn.innerText = "辨識中...";
 btn.disabled = true;
 try {
 const b64 = await compressForAi(file);
+aiPhotoTemp = await compressForStorage(file);
 const pureB64 = b64.split(",")[1];
 const apiKey = getStoredApiKey();
 const prompt = '解析此車險保單。輸出純JSON格式(勿用Markdown):\n{"clientName":"被保險人姓名","plateNumber":"牌照號碼(大寫英數加破折號)","company":"承保公司簡稱(去除產險二字)","startDate":"保險期間開始日YYYY-MM-DD(民國115年為2026,116年為2027)","vehicleType":"機車 🛵或汽車 🚗","endDate":"任意險保險期間到期日YYYY-MM-DD","fee":總保險費純數字(任意險加強制險合計),"hasCompulsory":true若有強制汽(機)車責任保險否則false,"compulsoryStartDate":"強制險保險期間開始日YYYY-MM-DD,沒有填空字串","compulsoryEndDate":"強制險保險期間到期日YYYY-MM-DD,沒有填空字串"' + COVERAGE_PROMPT + '}\n注意:startDate/endDate取任意險(車體、第三人責任等)的保險期間;若只有強制險則填強制險期間。';
@@ -426,15 +428,26 @@ premium: feeVal,
 ...(aiCoverageTemp && coverageCount(aiCoverageTemp) ? { coverage: aiCoverageTemp, coverageCount: coverageCount(aiCoverageTemp) } : {}),
 note: document.getElementById("aiNote").value.trim()
 };
+let photoNote = "";
+if (aiPhotoTemp) {
+const old = existId ? allRecords.find(r => r.id === existId) : null;
+const oldPhotos = old ? (Array.isArray(old.photos) ? old.photos : (old.photo ? [old.photo] : [])) : [];
+const merged = oldPhotos.concat([aiPhotoTemp]);
+// Firestore 單筆上限約 1MB，照片太多時保留最新的幾張
+while (merged.length > 1 && JSON.stringify({ ...(old || {}), ...data, photos: merged }).length > 900000) merged.shift();
+data.photos = merged;
+photoNote = merged.length < oldPhotos.length + 1 ? "（照片較多，已移除最舊的照片）" : "，保單照片已保存";
+}
 try {
 if (existId) {
 await recordsCol.doc(existId).update(data);
-showToast("已完成續保並覆蓋更新！");
+showToast("已完成續保並覆蓋更新" + photoNote + "！");
 } else {
 data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
 await recordsCol.add({ ...data, team: currentTeam });
-showToast("已建立新客戶保單！");
+showToast("已建立新客戶保單" + photoNote + "！");
 }
+aiPhotoTemp = null;
 closeAiConfirmModal();
 } catch (err) {
 alert("存檔失敗: " + err.message);
