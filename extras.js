@@ -189,7 +189,7 @@ const snap = await profilesCol.doc(id).get();
 if (snap.exists) {
 const d = snap.data();
 PROFILE_FIELDS.forEach(f => { if (d[f] !== undefined) document.getElementById(f).value = d[f]; });
-document.getElementById("pBirth").value = toWesternDate(d.pBirth);
+document.getElementById("pBirth").value = toRocDate(d.pBirth);
 document.getElementById("pMfg").value = toWesternDate(d.pMfg, true);
 profIdNo = d.pIdNo || ""; profSource = d.pSource || "";
 renderIdField(); renderSources();
@@ -222,7 +222,7 @@ const img = e.target.closest("img[data-idx]");
 if (img) openLightboxWithList(profPhotos.map(p => p.data), Number(img.getAttribute("data-idx")));
 });
 
-const PROFILE_AI_PROMPT = '這是台灣的證件照片（身分證正面/背面、居留證、行車執照、駕照或其他）。只輸出純JSON(勿用Markdown)，看不到的欄位給空字串，不要猜：\n{"docType":"idFront/idBack/residence/license/other（居留證填 residence）","name":"姓名（含外文姓名）","idNumber":"身分證統一編號或居留證統一證號","birthday":"出生日期，一律西元 YYYY/MM/DD（民國年加1911）","gender":"男或女","address":"身分證或居留證上的住址；行照上的地址不要填在這裡","owner":"行照車主","plate":"牌照號碼(大寫英數加破折號)","model":"廠牌與型式","mfgDate":"出廠年月，一律西元 YYYY/MM","cc":"排氣量","issueDate":"發照日期(民國 YYY/MM/DD)","engineNo":"引擎號碼","chassisNo":"車身號碼"}';
+const PROFILE_AI_PROMPT = '這是台灣的證件照片（身分證正面/背面、居留證、行車執照、駕照或其他）。只輸出純JSON(勿用Markdown)，看不到的欄位給空字串，不要猜：\n{"docType":"idFront/idBack/residence/license/other（居留證填 residence）","name":"姓名（含外文姓名）","idNumber":"身分證統一編號或居留證統一證號","birthday":"出生日期，一律民國 YYY/MM/DD（西元年減1911）","gender":"男或女","address":"身分證或居留證上的住址；行照上的地址不要填在這裡","owner":"行照車主","plate":"牌照號碼(大寫英數加破折號)","model":"廠牌與型式","mfgDate":"出廠年月，一律西元 YYYY/MM","cc":"排氣量","issueDate":"發照日期(民國 YYY/MM/DD)","engineNo":"引擎號碼","chassisNo":"車身號碼"}';
 const DOC_LABEL = { idFront: "身分證正面", idBack: "身分證反面", residence: "居留證", license: "行照", other: "證件" };
 // 民國／西元日期 → 西元 YYYY/MM/DD（monthOnly 時 YYYY/MM）
 function toWesternDate(s, monthOnly) {
@@ -236,6 +236,12 @@ const mm = String(parseInt(m[2], 10)).padStart(2, "0");
 if (monthOnly || !m[3]) return `${y}/${mm}`;
 return `${y}/${mm}/${String(parseInt(m[3], 10)).padStart(2, "0")}`;
 }
+// 生日用民國 YYY/MM/DD（西元也會自動換算）
+function toRocDate(s) {
+const w = toWesternDate(s);
+const m = w.match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+return m ? `${parseInt(m[1], 10) - 1911}/${m[2]}/${m[3]}` : w;
+}
 
 async function handleProfileFiles(files) {
 const msg = document.getElementById("pAiMsg");
@@ -248,7 +254,7 @@ try {
 const p = await geminiJSON(PROFILE_AI_PROMPT, [forAi], 600);
 label = DOC_LABEL[p.docType] || "證件";
 const put = (id, v) => { v = String(v || "").trim(); if (v) document.getElementById(id).value = v; };
-put("pName", p.name); put("pBirth", toWesternDate(p.birthday));
+put("pName", p.name); put("pBirth", toRocDate(p.birthday));
 // 地址只採用身分證／居留證上的，行照的地址不帶入
 if (p.docType !== "license") put("pAddress", p.address);
 if (p.gender && /[男女]/.test(p.gender)) document.getElementById("pGender").value = p.gender.includes("男") ? "男" : "女";
@@ -281,7 +287,7 @@ const team = profRecord.team || currentTeam;
 if (profShowId) profIdNo = document.getElementById("pIdNo").value.trim().toUpperCase();
 const data = { team, recordId: profRecord.id, pIdNo: profIdNo, pSource: profSource, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
 PROFILE_FIELDS.forEach(f => { data[f] = document.getElementById(f).value.trim(); });
-data.pBirth = toWesternDate(data.pBirth);
+data.pBirth = toRocDate(data.pBirth);
 data.pMfg = toWesternDate(data.pMfg, true);
 try {
 const ref = profilesCol.doc(profRecord.id);
@@ -401,7 +407,7 @@ fee, premium: fee, soldDate: soldIso || get(r, "sold"), policyYears: per.years |
 note: [ct.note, per.years >= 2 ? `${per.years}年期，到期 ${fmtRocMD(per.end)}` : ""].filter(Boolean).join("｜")
 },
 profile: {
-pName: name, pIdNo: get(r, "id").toUpperCase(), pBirth: toWesternDate(normBirth(get(r, "birth"))),
+pName: name, pIdNo: get(r, "id").toUpperCase(), pBirth: toRocDate(normBirth(get(r, "birth"))),
 pPhone: normPhone(get(r, "phone")), pLine: ct.line, pSource: ct.source, pNote: ct.note, pPlate: plate
 }
 });
